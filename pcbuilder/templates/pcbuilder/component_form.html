@@ -1,0 +1,138 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Новый компонент | PCFORGE</title>
+    <link rel="stylesheet" href="{% static 'pcbuilder/catalog.css' %}">
+    <link rel="stylesheet" href="{% static 'pcbuilder/component_form.css' %}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" aria-label="Категории комплектующих">
+            <a class="brand" href="{% url 'component_catalog' %}" aria-label="Конструктор ПК, каталог">
+                <span class="brand-mark">P</span>
+                <span class="brand-name">PC<span>FORGE</span></span>
+            </a>
+            <p class="nav-caption">КОМПЛЕКТУЮЩИЕ</p>
+            <nav class="category-nav">
+                <a class="category-link is-active" href="{% url 'component_catalog' %}">
+                    <span class="nav-glyph">⌂</span><span>Все товары</span>
+                </a>
+                {% for category in categories %}
+                    <a class="category-link" href="{% url 'component_catalog' %}?category={{ category.slug }}">
+                        <span class="nav-glyph">{{ category.name|slice:":1"|upper }}</span>
+                        <span>{{ category.name }}</span>
+                    </a>
+                {% endfor %}
+            </nav>
+            <div class="sidebar-bottom">
+                <span class="live-dot"></span>
+                <span>КОНФИГУРАТОР · 01</span>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <header class="topbar">
+                <div class="breadcrumbs">
+                    <a href="{% url 'component_catalog' %}">КАТАЛОГ</a><i>/</i><strong>НОВЫЙ КОМПОНЕНТ</strong>
+                </div>
+                <a class="add-link" href="{% url 'component_catalog' %}"><span>←</span> Вернуться в каталог</a>
+            </header>
+
+            <section class="form-page" aria-labelledby="form-title">
+                <div class="form-page-heading">
+                    <div>
+                        <p class="eyebrow">КАТАЛОГ / НОВАЯ ПОЗИЦИЯ</p>
+                        <h1 id="form-title">Добавить компонент</h1>
+                        <p class="form-intro">Заполните данные комплектующего и его технические характеристики.</p>
+                    </div>
+                    <span class="form-step"><b>01</b> / 01</span>
+                </div>
+
+                <div class="form-layout">
+                    <section class="component-form-card">
+                        <div class="form-card-heading">
+                            <span class="form-card-mark">+</span>
+                            <div>
+                                <p class="form-card-kicker">КАРТОЧКА ТОВАРА</p>
+                                <h2>Основная информация</h2>
+                            </div>
+                        </div>
+
+                        <form method="post" enctype="multipart/form-data" id="component-form" novalidate>
+                            {% csrf_token %}
+                            {{ form.non_field_errors }}
+                            {{ form.specs_json }}
+
+                            <div class="form-fields">
+                                <div class="form-field form-field-wide">
+                                    <label class="field-label" for="id_category">Категория <span>*</span></label>
+                                    <select class="field-control" name="{{ form.category.html_name }}" id="id_category" required>
+                                        <option value="">Выберите тип комплектующего</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category.pk }}" data-slug="{{ category.slug }}" {% if form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {{ form.category.errors }}
+                                </div>
+
+                                <div class="form-field form-field-wide">
+                                    <label class="field-label" for="id_name">Название товара <span>*</span></label>
+                                    <input class="field-control" type="text" name="{{ form.name.html_name }}" id="id_name" maxlength="200" value="{{ form.name.value|default_if_none:'' }}" placeholder="Например, AMD Ryzen 7 7800X3D" required>
+                                    {{ form.name.errors }}
+                                </div>
+
+                                <div class="form-field">
+                                    <label class="field-label" for="id_price">Цена <span>*</span></label>
+                                    <div class="price-control">
+                                        <input class="field-control" type="number" name="{{ form.price.html_name }}" id="id_price" min="0" step="0.01" value="{{ form.price.value|default_if_none:'' }}" placeholder="0.00" required>
+                                        <span>₽</span>
+                                    </div>
+                                    {{ form.price.errors }}
+                                </div>
+
+                                <div class="form-field form-field-wide">
+                                    <label class="field-label" for="id_thumbnail">Изображение <span class="field-optional">НЕОБЯЗАТЕЛЬНО</span></label>
+                                    <input class="field-control file-control" type="file" name="{{ form.thumbnail.html_name }}" id="id_thumbnail" accept="image/*">
+                                    {{ form.thumbnail.errors }}
+                                </div>
+                            </div>
+
+                            <fieldset class="spec-fields" id="spec-fields" hidden>
+                                <legend>ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ</legend>
+                                <p class="spec-hint">Поля зависят от выбранной категории.</p>
+                                <div class="spec-inputs" id="spec-inputs"></div>
+                            </fieldset>
+                            {{ form.specs_json.errors }}
+
+                            <footer class="form-footer">
+                                <p><span class="required-mark">*</span> Обязательные поля</p>
+                                <button class="save-product" type="submit">
+                                    <span>Сохранить товар</span><b aria-hidden="true">↗</b>
+                                </button>
+                            </footer>
+                        </form>
+                    </section>
+
+                    <aside class="form-aside">
+                        <span class="aside-index">PCF / 01</span>
+                        <div class="aside-art" aria-hidden="true"><i></i><b></b><span></span></div>
+                        <p class="aside-kicker">КОМПЛЕКТУЮЩИЕ</p>
+                        <h2>Точные данные.<br>Совместимая сборка.</h2>
+                        <p class="aside-copy">Характеристики используются для проверки совместимости процессора, памяти, видеокарты и корпуса.</p>
+                        <div class="aside-rule"><span>PCFORGE</span><span>01—25</span></div>
+                    </aside>
+                </div>
+
+                <footer class="page-footer">
+                    <span>PCFORGE <i>·</i> КОНФИГУРАТОР ПК</span>
+                    <a href="{% url 'component_catalog' %}">НАЗАД К КАТАЛОГУ <b>↗</b></a>
+                </footer>
+            </section>
+        </main>
+    </div>
+    <script src="{% static 'pcbuilder/component_form.js' %}" defer></script>
+</body>
+</html>

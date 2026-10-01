@@ -1,0 +1,131 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Конструктор ПК | Каталог</title>
+    <link rel="stylesheet" href="{% static 'pcbuilder/catalog.css' %}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" aria-label="Категории комплектующих">
+            <a class="brand" href="{% url 'component_catalog' %}" aria-label="Конструктор ПК, каталог">
+                <span class="brand-mark">P</span>
+                <span class="brand-name">PC<span>FORGE</span></span>
+            </a>
+            <p class="nav-caption">КОМПЛЕКТУЮЩИЕ</p>
+            <nav class="category-nav">
+                <a class="category-link {% if not selected_slug %}is-active{% endif %}" href="{% url 'component_catalog' %}">
+                    <span class="nav-glyph">⌂</span><span>Все товары</span>
+                </a>
+                {% for category in categories %}
+                    <a class="category-link {% if selected_slug == category.slug %}is-active{% endif %}"
+                       href="?category={{ category.slug }}">
+                        <span class="nav-glyph">{{ category.name|slice:":1"|upper }}</span>
+                        <span>{{ category.name }}</span>
+                    </a>
+                {% endfor %}
+            </nav>
+            <div class="sidebar-bottom">
+                <span class="live-dot"></span>
+                <span>КОНФИГУРАТОР · 01</span>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <header class="topbar">
+                <div class="breadcrumbs"><span>СБОРКА</span><i>/</i><strong>КОМПЛЕКТУЮЩИЕ</strong></div>
+                <a class="add-link" href="{% url 'component_create' %}"><span>+</span> Добавить товар</a>
+            </header>
+
+            <div class="catalog-layout">
+                <section class="catalog-column" aria-labelledby="catalog-title">
+                    <div class="catalog-heading">
+                        <div>
+                            <p class="eyebrow">ВЫБЕРИТЕ КОМПОНЕНТ</p>
+                            <h1 id="catalog-title">{% if selected_category %}{{ selected_category.name }}{% else %}Каталог{% endif %}</h1>
+                        </div>
+                        <span class="product-count"><b id="visible-count">{{ components|length }}</b> ПОЗИЦИЙ</span>
+                    </div>
+
+                    <div class="catalog-tools">
+                        <label class="search-box">
+                            <span class="search-icon" aria-hidden="true"></span>
+                            <input id="product-search" type="search" placeholder="Найти компонент" autocomplete="off">
+                            <kbd>/</kbd>
+                        </label>
+                        <span class="sort-label">СНАЧАЛА ПОПУЛЯРНЫЕ <span>⌄</span></span>
+                    </div>
+
+                    {% if components %}
+                        <div class="product-grid" id="product-grid">
+                            {% for component in components %}
+                                <button class="product-card" type="button"
+                                        data-component-id="{{ component.pk }}"
+                                        aria-pressed="false">
+                                    <span class="card-image-wrap">
+                                        {% if component.thumbnail %}
+                                            <img class="card-image" src="{{ component.thumbnail.url }}" alt="" loading="lazy">
+                                        {% else %}
+                                            <span class="image-placeholder" aria-hidden="true">
+                                                <span>{{ component.category.name|slice:":2"|upper }}</span>
+                                                <i></i>
+                                            </span>
+                                        {% endif %}
+                                        <span class="card-arrow" aria-hidden="true">↗</span>
+                                    </span>
+                                    <span class="card-category">{{ component.category.name }}</span>
+                                    <span class="card-name">{{ component.name }}</span>
+                                    <span class="card-price">{{ component.price|floatformat:2 }} <small>₽</small></span>
+                                </button>
+                            {% endfor %}
+                        </div>
+                        <p class="empty-search" id="empty-search" hidden>Ничего не найдено. Измените поисковый запрос.</p>
+                    {% else %}
+                        <div class="empty-catalog">
+                            <span class="empty-index">01 / КАТАЛОГ</span>
+                            <h2>Здесь пока пусто</h2>
+                            <p>Добавьте комплектующие через форму или создайте товары в панели администратора.</p>
+                            <a href="{% url 'component_create' %}">Добавить первый товар <span>↗</span></a>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <aside class="preview-panel" aria-label="Предпросмотр товара">
+                    <div class="preview-topline">
+                        <span>ПРЕДПРОСМОТР</span>
+                        <span class="preview-index" id="preview-index">01</span>
+                    </div>
+                    <div class="preview-content" id="preview-content" aria-live="polite">
+                        <div class="preview-image-stage" id="preview-image-stage">
+                            <div class="preview-placeholder"><span>PC</span><i></i></div>
+                        </div>
+                        <p class="preview-category" id="preview-category">ВЫБРАННЫЙ КОМПОНЕНТ</p>
+                        <h2 class="preview-name" id="preview-name">Выберите товар</h2>
+                        <p class="preview-price" id="preview-price">—</p>
+                        <div class="spec-heading"><span>ХАРАКТЕРИСТИКИ</span><i></i></div>
+                        <dl class="spec-list" id="spec-list">
+                            <p class="spec-empty">Характеристики появятся здесь</p>
+                        </dl>
+                    </div>
+                    <div class="preview-actions">
+                        <button class="add-to-build" id="add-to-build" type="button" disabled>
+                            <span>Добавить в сборку</span><b aria-hidden="true">↗</b>
+                        </button>
+                        <div class="build-summary">
+                            <span><i></i> В СБОРКЕ</span>
+                            <b><span id="build-count">{{ build_items|length }}</span> ПОЗ.</b>
+                        </div>
+                        <p class="build-total">ИТОГО <strong id="build-total">{{ build_total|floatformat:2 }} ₽</strong></p>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <form id="csrf-token-form" hidden>{% csrf_token %}</form>
+    {{ component_data|json_script:"component-data" }}
+    <script src="{% static 'pcbuilder/catalog.js' %}" defer></script>
+</body>
+</html>
