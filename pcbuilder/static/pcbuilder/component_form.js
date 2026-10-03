@@ -1,12 +1,21 @@
 (() => {
+    const socketOptions = ["AM3+", "AM4", "AM5", "FM2+", "LGA1151", "LGA1200", "LGA1700", "LGA1851", "sTR4", "sTRX4", "sTR5"];
+    const ramTypeOptions = ["DDR4", "DDR5"];
+    const cpuFields = [
+        { name: "socket", label: "Сокет", type: "select", options: socketOptions },
+        { name: "cores", label: "Количество ядер", type: "number" },
+        { name: "tdp", label: "TDP (Вт)", type: "number" },
+        { name: "base_clock", label: "Базовая частота (ГГц)", type: "number", step: "0.1" },
+        { name: "threads", label: "Количество потоков", type: "number" },
+    ];
+    const motherboardFields = [
+        { name: "socket", label: "Сокет", type: "select", options: socketOptions },
+        { name: "supported_ram_types", label: "Тип поддерживаемой памяти", type: "select", options: ramTypeOptions },
+        { name: "form_factor", label: "Форм-фактор", type: "text" },
+    ];
     const fieldsByCategory = {
-        cpu: [
-            { name: "socket", label: "Сокет", type: "text" },
-            { name: "cores", label: "Количество ядер", type: "number" },
-            { name: "tdp", label: "TDP (Вт)", type: "number" },
-            { name: "base_clock", label: "Базовая частота (ГГц)", type: "number", step: "0.1" },
-            { name: "threads", label: "Количество потоков", type: "number" },
-        ],
+        cpu: cpuFields,
+        processors: cpuFields,
         gpu: [
             { name: "length_mm", label: "Длина (мм)", type: "number" },
             { name: "vram", label: "Видеопамять (ГБ)", type: "number" },
@@ -14,15 +23,12 @@
             { name: "tdp", label: "TDP (Вт)", type: "number" },
         ],
         ram: [
-            { name: "memory_type", label: "Тип памяти (DDR4/DDR5)", type: "text" },
+            { name: "memory_type", label: "Тип памяти", type: "select", options: ramTypeOptions },
             { name: "capacity_gb", label: "Объём (ГБ)", type: "number" },
             { name: "speed_mhz", label: "Частота (МГц)", type: "number" },
         ],
-        motherboard: [
-            { name: "socket", label: "Сокет", type: "text" },
-            { name: "supported_ram_types", label: "Поддерживаемая память", type: "text", placeholder: "DDR4, DDR5" },
-            { name: "form_factor", label: "Форм-фактор", type: "text" },
-        ],
+        motherboard: motherboardFields,
+        motherboards: motherboardFields,
         case: [
             { name: "max_gpu_length_mm", label: "Макс. длина GPU (мм)", type: "number" },
             { name: "max_cooler_height_mm", label: "Макс. высота кулера (мм)", type: "number" },
@@ -30,17 +36,29 @@
         ],
         cooler: [{ name: "height_mm", label: "Высота кулера (мм)", type: "number" }],
         "power-supply": [{ name: "wattage", label: "Мощность (Вт)", type: "number" }],
+        "power-supplies": [{ name: "wattage", label: "Мощность (Вт)", type: "number" }],
         "graphics-card": [
             { name: "length_mm", label: "Длина (мм)", type: "number" },
             { name: "vram", label: "Видеопамять (ГБ)", type: "number" },
             { name: "power_draw", label: "Потребление (Вт)", type: "number" },
         ],
-        mainboard: [
-            { name: "socket", label: "Сокет", type: "text" },
-            { name: "supported_ram_types", label: "Поддерживаемая память", type: "text", placeholder: "DDR4, DDR5" },
+        "graphic-cards": [
+            { name: "length_mm", label: "Длина (мм)", type: "number" },
+            { name: "vram", label: "Видеопамять (ГБ)", type: "number" },
+            { name: "power_draw", label: "Потребление (Вт)", type: "number" },
+        ],
+        mainboard: motherboardFields,
+        psu: [{ name: "wattage", label: "Мощность (Вт)", type: "number" }],
+        storage: [
+            { name: "drive_type", label: "Тип накопителя", type: "select", options: ["M.2 NVMe", "SATA SSD", "HDD"] },
+            { name: "capacity_gb", label: "Объём (ГБ)", type: "number" },
+        ],
+        cases: [
+            { name: "max_gpu_length_mm", label: "Макс. длина GPU (мм)", type: "number" },
+            { name: "max_cooler_height_mm", label: "Макс. высота кулера (мм)", type: "number" },
             { name: "form_factor", label: "Форм-фактор", type: "text" },
         ],
-        psu: [{ name: "wattage", label: "Мощность (Вт)", type: "number" }],
+        cooling: [{ name: "height_mm", label: "Высота кулера (мм)", type: "number" }],
     };
 
     const form = document.getElementById("component-form");
@@ -72,16 +90,25 @@
             label.className = "field-label";
             label.htmlFor = `spec-${field.name}`;
             label.textContent = field.label;
-            const input = document.createElement("input");
+            const input = field.type === "select" ? document.createElement("select") : document.createElement("input");
             input.className = "field-control";
             input.id = `spec-${field.name}`;
             input.name = field.name;
-            input.type = field.type;
-            input.min = field.type === "number" ? "0" : "";
-            if (field.step) input.step = field.step;
-            if (field.placeholder) input.placeholder = field.placeholder;
             const savedValue = existingSpecs[field.name];
-            input.value = Array.isArray(savedValue) ? savedValue.join(", ") : savedValue ?? "";
+            if (field.type === "select") {
+                input.add(new Option("Выберите значение", ""));
+                for (const optionValue of field.options) input.add(new Option(optionValue, optionValue));
+                if (savedValue && !field.options.includes(savedValue)) {
+                    input.add(new Option(savedValue, savedValue));
+                }
+                input.value = Array.isArray(savedValue) ? savedValue[0] : savedValue ?? "";
+            } else {
+                input.type = field.type;
+                input.min = field.type === "number" ? "0" : "";
+                if (field.step) input.step = field.step;
+                if (field.placeholder) input.placeholder = field.placeholder;
+                input.value = Array.isArray(savedValue) ? savedValue.join(", ") : savedValue ?? "";
+            }
             wrapper.append(label, input);
             inputsContainer.append(wrapper);
         }
@@ -92,7 +119,7 @@
 
     form.addEventListener("submit", () => {
         const specs = {};
-        for (const input of inputsContainer.querySelectorAll("input")) {
+        for (const input of inputsContainer.querySelectorAll("input, select")) {
             if (!input.value.trim()) continue;
             specs[input.name] = input.type === "number" ? Number(input.value) : input.value.trim();
         }

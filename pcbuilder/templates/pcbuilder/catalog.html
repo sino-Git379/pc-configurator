@@ -7,26 +7,14 @@
     <title>Конструктор ПК | Каталог</title>
     <link rel="stylesheet" href="{% static 'pcbuilder/catalog.css' %}">
 </head>
-<body>
+<body data-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}">
     <div class="app-shell">
         <aside class="sidebar" aria-label="Категории комплектующих">
             <a class="brand" href="{% url 'component_catalog' %}" aria-label="Конструктор ПК, каталог">
                 <span class="brand-mark">P</span>
                 <span class="brand-name">PC<span>FORGE</span></span>
             </a>
-            <p class="nav-caption">КОМПЛЕКТУЮЩИЕ</p>
-            <nav class="category-nav">
-                <a class="category-link {% if not selected_slug %}is-active{% endif %}" href="{% url 'component_catalog' %}">
-                    <span class="nav-glyph">⌂</span><span>Все товары</span>
-                </a>
-                {% for category in categories %}
-                    <a class="category-link {% if selected_slug == category.slug %}is-active{% endif %}"
-                       href="?category={{ category.slug }}">
-                        <span class="nav-glyph">{{ category.name|slice:":1"|upper }}</span>
-                        <span>{{ category.name }}</span>
-                    </a>
-                {% endfor %}
-            </nav>
+            {% include "pcbuilder/partials/sidebar_nav.html" %}
             <div class="sidebar-bottom">
                 <span class="live-dot"></span>
                 <span>КОНФИГУРАТОР · 01</span>
@@ -36,7 +24,10 @@
         <main class="workspace">
             <header class="topbar">
                 <div class="breadcrumbs"><span>СБОРКА</span><i>/</i><strong>КОМПЛЕКТУЮЩИЕ</strong></div>
-                <a class="add-link" href="{% url 'component_create' %}"><span>+</span> Добавить товар</a>
+                <div class="topbar-actions">
+                    {% if request.user.is_staff %}<a class="add-link" href="{% url 'component_create' %}"><span>+</span> Добавить товар</a>{% endif %}
+                    {% include "pcbuilder/partials/account_nav.html" %}
+                </div>
             </header>
 
             <div class="catalog-layout">
@@ -46,7 +37,12 @@
                             <p class="eyebrow">ВЫБЕРИТЕ КОМПОНЕНТ</p>
                             <h1 id="catalog-title">{% if selected_category %}{{ selected_category.name }}{% else %}Каталог{% endif %}</h1>
                         </div>
-                        <span class="product-count"><b id="visible-count">{{ components|length }}</b> ПОЗИЦИЙ</span>
+                        <div class="catalog-heading-actions">
+                            {% if filter_active_build %}
+                                <a class="reset-build-filter" href="{% url 'component_catalog' %}?sort={{ selected_sort }}">Показать все товары <span>↗</span></a>
+                            {% endif %}
+                            <span class="product-count"><b id="visible-count">{{ components|length }}</b> ПОЗИЦИЙ</span>
+                        </div>
                     </div>
 
                     <div class="catalog-tools">
@@ -55,39 +51,60 @@
                             <input id="product-search" type="search" placeholder="Найти компонент" autocomplete="off">
                             <kbd>/</kbd>
                         </label>
-                        <span class="sort-label">СНАЧАЛА ПОПУЛЯРНЫЕ <span>⌄</span></span>
+                        <form class="sort-form" method="get" id="sort-form">
+                            {% if selected_slug %}<input type="hidden" name="category" value="{{ selected_slug }}">{% endif %}
+                            {% if filter_active_build %}<input type="hidden" name="build" value="active">{% endif %}
+                            <label class="sort-label" for="sort-select">СОРТИРОВКА</label>
+                            <select class="sort-select" id="sort-select" name="sort">
+                                <option value="popular" {% if selected_sort == "popular" %}selected{% endif %}>Сначала популярные</option>
+                                <option value="price_asc" {% if selected_sort == "price_asc" %}selected{% endif %}>Сначала дешёвые</option>
+                                <option value="price_desc" {% if selected_sort == "price_desc" %}selected{% endif %}>Сначала дорогие</option>
+                            </select>
+                        </form>
                     </div>
 
                     {% if components %}
                         <div class="product-grid" id="product-grid">
                             {% for component in components %}
-                                <button class="product-card" type="button"
-                                        data-component-id="{{ component.pk }}"
-                                        aria-pressed="false">
-                                    <span class="card-image-wrap">
-                                        {% if component.thumbnail %}
-                                            <img class="card-image" src="{{ component.thumbnail.url }}" alt="" loading="lazy">
-                                        {% else %}
-                                            <span class="image-placeholder" aria-hidden="true">
-                                                <span>{{ component.category.name|slice:":2"|upper }}</span>
-                                                <i></i>
-                                            </span>
-                                        {% endif %}
-                                        <span class="card-arrow" aria-hidden="true">↗</span>
-                                    </span>
-                                    <span class="card-category">{{ component.category.name }}</span>
-                                    <span class="card-name">{{ component.name }}</span>
-                                    <span class="card-price">{{ component.price|floatformat:2 }} <small>₽</small></span>
-                                </button>
+                                <article class="product-card {% if component.pk in current_build_component_ids %}is-in-build{% endif %}" data-component-id="{{ component.pk }}">
+                                    <button class="product-select" type="button" aria-pressed="false" aria-label="Выбрать {{ component.name }}">
+                                        <span class="card-image-wrap">
+                                            {% if component.thumbnail %}
+                                                <img class="card-image" src="{{ component.thumbnail.url }}" alt="" loading="lazy">
+                                            {% elif component.thumbnail_url %}
+                                                <img class="card-image" src="{{ component.thumbnail_url }}" alt="" loading="lazy">
+                                            {% else %}
+                                                <span class="image-placeholder" aria-hidden="true">
+                                                    <span>{{ component.category.name|slice:":2"|upper }}</span>
+                                                    <i></i>
+                                                </span>
+                                            {% endif %}
+                                            <span class="card-arrow" aria-hidden="true">↗</span>
+                                        </span>
+                                        <span class="card-category">{{ component.category.name }}</span>
+                                        <span class="card-name">{{ component.name }}</span>
+                                        <span class="card-price">{{ component.price|floatformat:2 }} <small>₽</small></span>
+                                    </button>
+                                    <button class="card-add" type="button" aria-label="Добавить {{ component.name }} в сборку">
+                                        <span>Добавить в сборку</span><b aria-hidden="true">+</b>
+                                    </button>
+                                    <span class="in-build-badge" {% if component.pk not in current_build_component_ids %}hidden{% endif %}>В этой сборке</span>
+                                </article>
                             {% endfor %}
                         </div>
                         <p class="empty-search" id="empty-search" hidden>Ничего не найдено. Измените поисковый запрос.</p>
                     {% else %}
                         <div class="empty-catalog">
                             <span class="empty-index">01 / КАТАЛОГ</span>
-                            <h2>Здесь пока пусто</h2>
-                            <p>Добавьте комплектующие через форму или создайте товары в панели администратора.</p>
-                            <a href="{% url 'component_create' %}">Добавить первый товар <span>↗</span></a>
+                            {% if filter_active_build %}
+                                <h2>В этой сборке нет компонентов</h2>
+                                <p>Добавьте товары, затем выберите эту сборку снова.</p>
+                                <a href="{% url 'component_catalog' %}?sort={{ selected_sort }}">Показать все товары <span>↗</span></a>
+                            {% else %}
+                                <h2>Здесь пока пусто</h2>
+                                <p>Добавьте комплектующие через форму или создайте товары в панели администратора.</p>
+                                {% if request.user.is_staff %}<a href="{% url 'component_create' %}">Добавить первый товар <span>↗</span></a>{% endif %}
+                            {% endif %}
                         </div>
                     {% endif %}
                 </section>
@@ -101,6 +118,10 @@
                         <div class="preview-image-stage" id="preview-image-stage">
                             <div class="preview-placeholder"><span>PC</span><i></i></div>
                         </div>
+                        <small class="image-credit" id="preview-image-credit" hidden>
+                            <span id="preview-image-credit-text"></span>
+                            <a id="preview-image-source" href="#" target="_blank" rel="noopener noreferrer">Источник</a>
+                        </small>
                         <p class="preview-category" id="preview-category">ВЫБРАННЫЙ КОМПОНЕНТ</p>
                         <h2 class="preview-name" id="preview-name">Выберите товар</h2>
                         <p class="preview-price" id="preview-price">—</p>
@@ -110,22 +131,22 @@
                         </dl>
                     </div>
                     <div class="preview-actions">
-                        <button class="add-to-build" id="add-to-build" type="button" disabled>
-                            <span>Добавить в сборку</span><b aria-hidden="true">↗</b>
+                        <p class="preview-cart-count">В корзине: <strong id="build-count">{{ current_build_count }}</strong> комплектующих</p>
+                        <p class="build-total">ИТОГО <strong id="build-total">{{ current_build_total|floatformat:2 }} ₽</strong></p>
+                        <button class="checkout-button" id="cart-open" type="button">
+                            <span>Корзина</span><b aria-hidden="true">→</b>
                         </button>
-                        <div class="build-summary">
-                            <span><i></i> В СБОРКЕ</span>
-                            <b><span id="build-count">{{ build_items|length }}</span> ПОЗ.</b>
-                        </div>
-                        <p class="build-total">ИТОГО <strong id="build-total">{{ build_total|floatformat:2 }} ₽</strong></p>
                     </div>
                 </aside>
             </div>
         </main>
     </div>
 
-    <form id="csrf-token-form" hidden>{% csrf_token %}</form>
+    {% include "pcbuilder/partials/auth_modal.html" %}
+    {% include "pcbuilder/partials/cart_modal.html" %}
     {{ component_data|json_script:"component-data" }}
+    <script src="{% static 'pcbuilder/sidebar.js' %}" defer></script>
     <script src="{% static 'pcbuilder/catalog.js' %}" defer></script>
+    <script src="{% static 'pcbuilder/auth.js' %}" defer></script>
 </body>
 </html>

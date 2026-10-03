@@ -1,0 +1,55 @@
+<section class="sidebar-accordion is-open" data-accordion>
+    <h2 class="sidebar-section-heading">
+        <button class="sidebar-accordion-trigger" type="button" aria-expanded="true" aria-controls="sidebar-categories">
+            <span>КОМПЛЕКТУЮЩИЕ</span><b aria-hidden="true">⌄</b>
+        </button>
+    </h2>
+    <div class="sidebar-accordion-panel" id="sidebar-categories">
+        <nav class="category-nav" aria-label="Категории комплектующих">
+                <a class="category-link {% if not selected_slug %}is-active{% endif %}" href="{% url 'component_catalog' %}{% if filter_active_build %}?build=active&amp;sort={{ selected_sort|default:'popular' }}{% endif %}">
+                <span class="nav-glyph">⌂</span><span>Все товары</span>
+            </a>
+            {% for category in categories %}
+                <a class="category-link {% if selected_slug == category.slug %}is-active{% endif %}"
+                   href="{% url 'component_catalog' %}?category={{ category.slug }}&amp;sort={{ selected_sort|default:'popular' }}{% if filter_active_build %}&amp;build=active{% endif %}">
+                    <span class="nav-glyph">{{ category.name|slice:":1"|upper }}</span>
+                    <span>{{ category.name }}</span>
+                </a>
+            {% endfor %}
+        </nav>
+    </div>
+</section>
+
+<section class="sidebar-accordion" data-accordion>
+    <h2 class="sidebar-section-heading">
+        <button class="sidebar-accordion-trigger" type="button" aria-expanded="false" aria-controls="sidebar-builds">
+            <span>МОИ СБОРКИ</span><b aria-hidden="true">⌄</b>
+        </button>
+    </h2>
+    <div class="sidebar-accordion-panel" id="sidebar-builds" hidden>
+        {% if user.is_authenticated %}
+            <div class="saved-build-list">
+                {% for build in user_builds %}
+                    <button class="saved-build {% if current_build.pk == build.pk %}is-active{% endif %}"
+                            type="button"
+                            data-build-id="{{ build.pk }}"
+                            data-select-url="{% url 'select_build' build.pk %}"
+                            aria-current="{% if current_build.pk == build.pk %}true{% else %}false{% endif %}">
+                        <span class="saved-build-indicator" aria-hidden="true"></span>
+                        <span class="saved-build-copy">
+                            <strong>{{ build.title }}</strong>
+                            <small>{{ build.created_at|date:"d.m.Y" }}</small>
+                        </span>
+                        <span class="saved-build-arrow" aria-hidden="true">↗</span>
+                    </button>
+                {% empty %}
+                    <p class="saved-build-empty">Сохранённых сборок пока нет.</p>
+                {% endfor %}
+            </div>
+        {% else %}
+            <button class="builds-login" type="button" data-open-auth>
+                <span>Войти, чтобы увидеть сборки</span><b aria-hidden="true">↗</b>
+            </button>
+        {% endif %}
+    </div>
+</section>

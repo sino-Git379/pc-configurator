@@ -1,0 +1,75 @@
+<dialog class="cart-modal" id="cart-modal" aria-labelledby="cart-title">
+    <section class="cart-dialog-content">
+        <button class="cart-close" id="cart-close" type="button" aria-label="Закрыть корзину">×</button>
+        <p class="cart-kicker">PCFORGE / YOUR BUILD</p>
+        <h2 id="cart-title">Корзина сборки</h2>
+        <p class="cart-count-label">В корзине: <strong id="cart-item-count">{{ current_build_count }}</strong> комплектующих</p>
+        <div class="cart-empty" id="cart-empty" {% if current_build_items %}hidden{% endif %}>
+            <span>01 / CART</span>
+            <p>Пока нет комплектующих. Добавьте товары кнопкой на карточке.</p>
+        </div>
+        <ul class="cart-items" id="cart-items" {% if not current_build_items %}hidden{% endif %}>
+            {% for item in current_build_items %}
+                <li class="cart-item" data-component-id="{{ item.component_id }}">
+                    <div class="cart-item-info">
+                        <span class="cart-item-category">{{ item.component.category.name }}</span>
+                        <strong>{{ item.component.name }}</strong>
+                        <small>{{ item.quantity }} × {{ item.component.price|floatformat:2 }} ₽</small>
+                    </div>
+                    <b class="cart-line-total">{{ item.component.price|floatformat:2 }} ₽</b>
+                    <button class="cart-remove" type="button" data-remove-id="{{ item.component_id }}" aria-label="Удалить {{ item.component.name }}">×</button>
+                </li>
+            {% endfor %}
+        </ul>
+        <section class="cart-compatibility" id="cart-compatibility" aria-live="polite">
+            {% if current_build_compatibility.is_valid %}
+                <p class="compatibility-state is-valid"><i></i> Конфигурация совместима</p>
+            {% else %}
+                <p class="compatibility-state is-invalid"><i></i> Обнаружена несовместимость</p>
+                <ul>{% for error in current_build_compatibility.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+            {% if current_build_compatibility.warnings %}
+                <ul class="compatibility-warnings">{% for warning in current_build_compatibility.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+            {% endif %}
+        </section>
+        <div class="cart-total"><span>ИТОГО</span><strong id="cart-total">{{ current_build_total|floatformat:2 }} ₽</strong></div>
+        <button class="cart-save-build" id="cart-save-build" type="button"
+                data-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+                {% if not current_build_count %}disabled{% endif %}>
+            <span>Сохранить сборку</span><b aria-hidden="true">↓</b>
+        </button>
+        <button class="cart-checkout" id="cart-checkout" type="button"
+                data-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+                {% if not current_build_count %}disabled{% endif %}>
+            <span>Перейти к оформлению</span><b aria-hidden="true">↗</b>
+        </button>
+    </section>
+</dialog>
+
+<dialog class="checkout-modal" id="checkout-modal" aria-labelledby="checkout-title">
+    <section class="checkout-dialog-content">
+        <button class="checkout-close" id="checkout-close" type="button" aria-label="Закрыть оформление">×</button>
+        <p class="cart-kicker">PCFORGE / DELIVERY</p>
+        <h2 id="checkout-title">Оформление заказа</h2>
+        <p class="checkout-intro">Укажите дату доставки и адрес для чека.</p>
+        <form id="checkout-form" action="{% url 'checkout' %}">
+            <label for="delivery-date">Когда вам удобно привезти заказ?</label>
+            <input id="delivery-date" name="delivery_date" type="date" min="{{ min_delivery_date }}" required>
+            <label for="order-email">Email для чека</label>
+            <input id="order-email" name="email" type="email" value="{{ request.user.email }}" autocomplete="email" required>
+            <p class="checkout-error" id="checkout-error" role="alert" hidden></p>
+            <button class="cart-checkout" type="submit"><span>Подтвердить заказ</span><b aria-hidden="true">↗</b></button>
+        </form>
+    </section>
+</dialog>
+
+<dialog class="order-success-modal" id="order-success-modal" aria-labelledby="order-success-title">
+    <section class="checkout-dialog-content order-success-content">
+        <button class="checkout-close" id="order-success-close" type="button" aria-label="Закрыть уведомление">×</button>
+        <span class="order-success-mark" aria-hidden="true">✓</span>
+        <p class="cart-kicker">PCFORGE / CONFIRMED</p>
+        <h2 id="order-success-title">Заказ оформлен</h2>
+        <p id="order-success-message"></p>
+        <button class="cart-checkout" id="order-success-continue" type="button"><span>Продолжить покупки</span><b aria-hidden="true">↗</b></button>
+    </section>
+</dialog>

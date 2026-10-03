@@ -1,0 +1,32 @@
+<form id="csrf-token-form" hidden>{% csrf_token %}</form>
+<dialog class="auth-modal" id="auth-modal" aria-labelledby="auth-title">
+    <section class="auth-dialog-content">
+        <button class="auth-close" id="auth-close" type="button" aria-label="Закрыть окно">×</button>
+        <p class="auth-kicker">PCFORGE / ACCOUNT</p>
+        <h2 id="auth-title">Ваша сборка ждёт</h2>
+        <p class="auth-intro">Войдите или создайте аккаунт, чтобы сохранить сборку.</p>
+        <div class="auth-tabs" role="tablist" aria-label="Авторизация">
+            <button class="auth-tab is-active" type="button" role="tab" aria-selected="true" data-auth-tab="login">Вход</button>
+            <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="register">Регистрация</button>
+        </div>
+        <form class="auth-form" id="auth-login-form" data-auth-panel="login" action="{% url 'auth_login' %}">
+            <label for="auth-login-username">Логин</label>
+            <input id="auth-login-username" name="username" type="text" autocomplete="username" required>
+            <label for="auth-login-password">Пароль</label>
+            <input id="auth-login-password" name="password" type="password" autocomplete="current-password" required>
+            <button class="auth-submit" type="submit"><span>Войти</span><b aria-hidden="true">↗</b></button>
+        </form>
+        <form class="auth-form" id="auth-register-form" data-auth-panel="register" action="{% url 'auth_register' %}" hidden>
+            <label for="auth-register-username">Логин</label>
+            <input id="auth-register-username" name="username" type="text" autocomplete="username" required>
+            <label for="auth-register-email">Электронная почта <span>НЕОБЯЗАТЕЛЬНО</span></label>
+            <input id="auth-register-email" name="email" type="email" autocomplete="email">
+            <label for="auth-register-password">Пароль</label>
+            <input id="auth-register-password" name="password" type="password" autocomplete="new-password" required>
+            <label for="auth-register-confirm">Повторите пароль</label>
+            <input id="auth-register-confirm" name="password_confirm" type="password" autocomplete="new-password" required>
+            <button class="auth-submit" type="submit"><span>Создать аккаунт</span><b aria-hidden="true">↗</b></button>
+        </form>
+        <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+    </section>
+</dialog>

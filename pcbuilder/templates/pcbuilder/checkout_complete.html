@@ -1,0 +1,46 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Сборка сохранена | PCFORGE</title>
+    <link rel="stylesheet" href="{% static 'pcbuilder/catalog.css' %}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" aria-label="Категории комплектующих">
+            <a class="brand" href="{% url 'component_catalog' %}" aria-label="Конструктор ПК, каталог">
+                <span class="brand-mark">P</span><span class="brand-name">PC<span>FORGE</span></span>
+            </a>
+            {% include "pcbuilder/partials/sidebar_nav.html" %}
+            <div class="sidebar-bottom"><span class="live-dot"></span><span>КОНФИГУРАТОР · 01</span></div>
+        </aside>
+        <main class="workspace">
+            <header class="topbar">
+                <div class="breadcrumbs"><a href="{% url 'component_catalog' %}">КАТАЛОГ</a><i>/</i><strong>СБОРКА СОХРАНЕНА</strong></div>
+                <div class="topbar-actions">
+                    <a class="add-link" href="{% url 'component_catalog' %}"><span>←</span> Вернуться в каталог</a>
+                    {% include "pcbuilder/partials/account_nav.html" %}
+                </div>
+            </header>
+            <section class="order-complete">
+                <p class="eyebrow">PCFORGE / BUILD {{ build.share_code|slice:":8"|upper }}</p>
+                <h1>Сборка сохранена</h1>
+                <p>Сборка привязана к вашему аккаунту. Её код для доступа:</p>
+                <code>{{ build.share_code }}</code>
+                <ul class="order-items">
+                    {% for item in items %}
+                        <li><span>{{ item.component.name }} × {{ item.quantity }}</span><b>{{ item.component.price|floatformat:2 }} ₽</b></li>
+                    {% endfor %}
+                </ul>
+                <p class="order-total">Итого <strong>{{ total|floatformat:2 }} ₽</strong></p>
+                <a class="order-back" href="{% url 'component_catalog' %}">Продолжить подбор <span>↗</span></a>
+            </section>
+        </main>
+    </div>
+    <script src="{% static 'pcbuilder/sidebar.js' %}" defer></script>
+    {% include "pcbuilder/partials/auth_modal.html" %}
+    <script src="{% static 'pcbuilder/auth.js' %}" defer></script>
+</body>
+</html>

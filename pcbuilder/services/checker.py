@@ -21,13 +21,13 @@ def check_compatibility(build_or_items: Build | Iterable[BuildItem | Component])
 
     errors: list[str] = []
     warnings: list[str] = []
-    cpus = _components_in(entries, "cpu", "processor")
-    motherboards = _components_in(entries, "motherboard", "mainboard")
+    cpus = _components_in(entries, "cpu", "processor", "processors")
+    motherboards = _components_in(entries, "motherboard", "motherboards", "mainboard")
     memory = _components_in(entries, "ram", "memory")
-    gpus = _components_in(entries, "gpu", "graphics-card", "video-card")
-    cases = _components_in(entries, "case", "pc-case", "chassis")
-    coolers = _components_in(entries, "cooler", "cpu-cooler")
-    power_supplies = _components_in(entries, "power-supply", "psu")
+    gpus = _components_in(entries, "gpu", "graphic-cards", "graphics-card", "video-card")
+    cases = _components_in(entries, "case", "cases", "pc-case", "chassis")
+    coolers = _components_in(entries, "cooler", "cooling", "cpu-cooler")
+    power_supplies = _components_in(entries, "power-supply", "power-supplies", "psu")
 
     for cpu, _ in cpus:
         cpu_socket = _spec(cpu, "socket")

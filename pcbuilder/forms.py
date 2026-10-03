@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.utils import timezone
 
 from .models import Component
 
@@ -33,3 +34,17 @@ class ComponentForm(forms.ModelForm):
             component.save()
             self.save_m2m()
         return component
+
+
+class CheckoutForm(forms.Form):
+    delivery_date = forms.DateField(
+        input_formats=["%Y-%m-%d"],
+        error_messages={"required": "Выберите удобную дату доставки."},
+    )
+    email = forms.EmailField(error_messages={"required": "Укажите email для получения чека."})
+
+    def clean_delivery_date(self):
+        delivery_date = self.cleaned_data["delivery_date"]
+        if delivery_date < timezone.localdate():
+            raise forms.ValidationError("Дата доставки не может быть в прошлом.")
+        return delivery_date

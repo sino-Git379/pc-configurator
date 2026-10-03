@@ -15,18 +15,7 @@
                 <span class="brand-mark">P</span>
                 <span class="brand-name">PC<span>FORGE</span></span>
             </a>
-            <p class="nav-caption">КОМПЛЕКТУЮЩИЕ</p>
-            <nav class="category-nav">
-                <a class="category-link is-active" href="{% url 'component_catalog' %}">
-                    <span class="nav-glyph">⌂</span><span>Все товары</span>
-                </a>
-                {% for category in categories %}
-                    <a class="category-link" href="{% url 'component_catalog' %}?category={{ category.slug }}">
-                        <span class="nav-glyph">{{ category.name|slice:":1"|upper }}</span>
-                        <span>{{ category.name }}</span>
-                    </a>
-                {% endfor %}
-            </nav>
+            {% include "pcbuilder/partials/sidebar_nav.html" %}
             <div class="sidebar-bottom">
                 <span class="live-dot"></span>
                 <span>КОНФИГУРАТОР · 01</span>
@@ -38,7 +27,10 @@
                 <div class="breadcrumbs">
                     <a href="{% url 'component_catalog' %}">КАТАЛОГ</a><i>/</i><strong>НОВЫЙ КОМПОНЕНТ</strong>
                 </div>
-                <a class="add-link" href="{% url 'component_catalog' %}"><span>←</span> Вернуться в каталог</a>
+                <div class="topbar-actions">
+                    <a class="add-link" href="{% url 'component_catalog' %}"><span>←</span> Вернуться в каталог</a>
+                    {% include "pcbuilder/partials/account_nav.html" %}
+                </div>
             </header>
 
             <section class="form-page" aria-labelledby="form-title">
@@ -133,6 +125,9 @@
             </section>
         </main>
     </div>
+    <script src="{% static 'pcbuilder/sidebar.js' %}" defer></script>
+    {% include "pcbuilder/partials/auth_modal.html" %}
     <script src="{% static 'pcbuilder/component_form.js' %}" defer></script>
+    <script src="{% static 'pcbuilder/auth.js' %}" defer></script>
 </body>
 </html>

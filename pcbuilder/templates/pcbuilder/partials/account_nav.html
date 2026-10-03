@@ -1,0 +1,17 @@
+{% if user.is_authenticated %}
+    <div class="account-profile">
+        <span class="account-avatar" aria-hidden="true">{{ user.username|slice:":1"|upper }}</span>
+        <span class="account-identity">
+            <b>{{ user.username }}</b>
+            <small><i></i> ONLINE</small>
+        </span>
+        <form method="post" action="{% url 'auth_logout' %}">
+            {% csrf_token %}
+            <button class="account-action account-logout" type="submit">Выйти</button>
+        </form>
+    </div>
+{% else %}
+    <button class="account-action account-login" type="button" data-open-auth>
+        <span>Войти / Регистрация</span><b aria-hidden="true">↗</b>
+    </button>
+{% endif %}
